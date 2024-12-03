@@ -1,1 +1,168 @@
+import React, { useState, useEffect } from 'react';
+
+// Hardcoded API responses for demonstration purposes
+const formResponses = {
+  userInformation: {
+    fields: [
+      { name: "firstName", type: "text", label: "First Name", required: true },
+      { name: "lastName", type: "text", label: "Last Name", required: true },
+      { name: "age", type: "number", label: "Age", required: false }
+    ]
+  },
+  addressInformation: {
+    fields: [
+      { name: "street", type: "text", label: "Street", required: true },
+      { name: "city", type: "text", label: "City", required: true },
+      {
+        name: "state", type: "dropdown", label: "State", options: ["California", "Texas", "New York"], required: true
+      },
+      { name: "zipCode", type: "text", label: "Zip Code", required: false }
+    ]
+  },
+  paymentInformation: {
+    fields: [
+      { name: "cardNumber", type: "text", label: "Card Number", required: true },
+      { name: "expiryDate", type: "date", label: "Expiry Date", required: true },
+      { name: "cvv", type: "password", label: "CVV", required: true },
+      { name: "cardholderName", type: "text", label: "Cardholder Name", required: true }
+    ]
+  }
+};
+
+function App() {
+  const [selectedForm, setSelectedForm] = useState('userInformation');
+  const [formFields, setFormFields] = useState([]);
+  const [formData, setFormData] = useState({});
+  const [progress, setProgress] = useState(0);
+  const [submittedData, setSubmittedData] = useState([]);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // Load form fields when the selected form changes
+  useEffect(() => {
+    setFormFields(formResponses[selectedForm]?.fields || []);
+  }, [selectedForm]);
+
+  // Handle form selection change
+  const handleFormChange = (event) => {
+    setSelectedForm(event.target.value);
+  };
+
+  // Handle input changes
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  // Calculate progress based on completed fields
+  useEffect(() => {
+    const completedFields = formFields.filter(field => formData[field.name] !== undefined && formData[field.name] !== '');
+    setProgress((completedFields.length / formFields.length) * 100);
+  }, [formData, formFields]);
+
+  // Form submission handler
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    // Simulate form validation
+    const isValid = formFields.every(field => !field.required || formData[field.name]);
+    if (isValid) {
+      setSubmittedData([...submittedData, formData]);
+      setSuccessMessage('Form submitted successfully!');
+      setFormData({});
+    } else {
+      setSuccessMessage('Please fill in all required fields.');
+    }
+  };
+
+  // Handle entry deletion
+  const handleDeleteEntry = (index) => {
+    const newData = [...submittedData];
+    newData.splice(index, 1);
+    setSubmittedData(newData);
+    setSuccessMessage('Entry deleted successfully.');
+  };
+
+  return (
+    <div className="App">
+      <header>
+        <h1>Dynamic Form Implementation</h1>
+      </header>
+      <main>
+        <div>
+          <label>Select Form:</label>
+          <select value={selectedForm} onChange={handleFormChange}>
+            <option value="userInformation">User Information</option>
+            <option value="addressInformation">Address Information</option>
+            <option value="paymentInformation">Payment Information</option>
+          </select>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          {formFields.map((field, index) => (
+            <div key={index}>
+              <label>{field.label}</label>
+              {field.type === 'dropdown' ? (
+                <select name={field.name} onChange={handleInputChange} value={formData[field.name] || ''}>
+                  <option value="">Select {field.label}</option>
+                  {field.options.map((option, i) => (
+                    <option key={i} value={option}>{option}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type={field.type}
+                  name={field.name}
+                  onChange={handleInputChange}
+                  value={formData[field.name] || ''}
+                  required={field.required}
+                />
+              )}
+              {field.required && !formData[field.name] && <span style={{ color: 'red' }}>This field is required</span>}
+            </div>
+          ))}
+          <button type="submit">Submit</button>
+        </form>
+
+        {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
+
+        <div>
+          <h2>Progress: {Math.round(progress)}%</h2>
+          <progress value={progress} max="100"></progress>
+        </div>
+
+        {submittedData.length > 0 && (
+          <div>
+            <h2>Submitted Data</h2>
+            <table>
+              <thead>
+                <tr>
+                  {formFields.map((field, index) => (
+                    <th key={index}>{field.label}</th>
+                  ))}
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {submittedData.map((entry, index) => (
+                  <tr key={index}>
+                    {formFields.map((field, idx) => (
+                      <td key={idx}>{entry[field.name]}</td>
+                    ))}
+                    <td>
+                      <button onClick={() => handleDeleteEntry(index)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </main>
+      <footer>
+        <p>&copy; 2024 Dynamic Form App</p>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
 
